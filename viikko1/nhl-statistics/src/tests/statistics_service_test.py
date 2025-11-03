@@ -1,5 +1,5 @@
 import unittest
-from statistics_service import StatisticsService
+from statistics_service import StatisticsService, SortBy
 from player import Player
 
 class PlayerReaderStub:
@@ -35,14 +35,27 @@ class TestStatisticsService(unittest.TestCase):
 
     def test_top_returns_correct_number_of_players(self):
         top_players = self.stats.top(2)
-        self.assertEqual(len(top_players), 3)
+        self.assertEqual(len(top_players), 2)
 
     def test_top_returns_players_sorted_by_points_descending(self):
         top_players = self.stats.top(2)
         points = [p.points for p in top_players]
         self.assertEqual(points, sorted(points, reverse=True))
 
-    def test_top_0_returns_top_player_only(self):
+    def test_top_0_returns_empty_list(self):
         top_players = self.stats.top(0)
-        self.assertEqual(len(top_players), 1)
-        self.assertEqual(top_players[0].name, "Gretzky")
+        self.assertEqual(len(top_players), 0)
+
+    def test_top_sorted_by_goals(self):
+        top_players = self.stats.top(3, SortBy.GOALS)
+        goals = [p.goals for p in top_players]
+        self.assertEqual(goals, sorted(goals, reverse=True))
+
+    def test_top_sorted_by_assists(self):
+        top_players = self.stats.top(3, SortBy.ASSISTS)
+        assists = [p.assists for p in top_players]
+        self.assertEqual(assists, sorted(assists, reverse=True))
+
+    def test_top_raises_error_for_invalid_sortby(self):
+        with self.assertRaises(ValueError):
+            self.stats.top(3, "invalid")
