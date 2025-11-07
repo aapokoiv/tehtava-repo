@@ -1,5 +1,3 @@
-import requests
-from player import Player
 from enum import Enum
 
 class SortBy(Enum):
