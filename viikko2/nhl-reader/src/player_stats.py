@@ -15,17 +15,26 @@ class PlayerStats:
             if player.nation == nation:
                 players.append(player)
 
-        if sort_by == SortBy.POINTS:
-            key_func = lambda player: player.goals + player.assists
-        elif sort_by == SortBy.GOALS:
-            key_func = lambda player: player.goals
-        elif sort_by == SortBy.ASSISTS:
-            key_func = lambda player: player.assists
-        
-        sorted_players = sorted(
-            players,
-            reverse=True,
-            key=key_func
-        )
+        return self.sort_players(players, sort_by)
 
-        return sorted_players
+    def sort_players(self, players, sort_by):
+        def by_points(player):
+            return player.goals + player.assists
+
+        def by_goals(player):
+            return player.goals
+
+        def by_assists(player):
+            return player.assists
+
+        key_func = None
+        if sort_by == SortBy.POINTS:
+            key_func = by_points
+        elif sort_by == SortBy.GOALS:
+            key_func = by_goals
+        elif sort_by == SortBy.ASSISTS:
+            key_func = by_assists
+        else:
+            raise ValueError(f"Unknown sort type: {sort_by}")
+
+        return sorted(players, reverse=True, key=key_func)
