@@ -11,7 +11,7 @@ class TestKauppa(unittest.TestCase):
         self.viitegeneraattori_mock = Mock()
         self.varasto_mock = Mock()
 
-        self.viitegeneraattori_mock.uusi.return_value = 42
+        self.viitegeneraattori_mock.uusi.side_effect = [42, 43, 44]
 
         # tehdään toteutus saldo-metodille
         def varasto_saldo(tuote_id):
@@ -37,9 +37,9 @@ class TestKauppa(unittest.TestCase):
 
         # alustetaan kauppa
         self.kauppa = Kauppa(self.varasto_mock, self.pankki_mock, self.viitegeneraattori_mock)
+        self.kauppa.aloita_asiointi()
 
     def test_maksettaessa_ostos_pankin_metodia_tilisiirto_kutsutaan(self):
-        self.kauppa.aloita_asiointi()
         self.kauppa.lisaa_koriin(1)
         self.kauppa.tilimaksu("pekka", "12345")
 
@@ -48,7 +48,6 @@ class TestKauppa(unittest.TestCase):
 
 
     def test_maksettaessa_kaksi_eri_ostosta_pankin_metodia_tilisiirto_kutsutaan(self):
-        self.kauppa.aloita_asiointi()
         self.kauppa.lisaa_koriin(1)
         self.kauppa.lisaa_koriin(2)
         self.kauppa.tilimaksu("pekka", "12345")
@@ -57,7 +56,6 @@ class TestKauppa(unittest.TestCase):
         self.pankki_mock.tilisiirto.assert_called_with("pekka", 42, "12345", ANY, 15)
 
     def test_maksettaessa_kaksi_samaa_ostosta_pankin_metodia_tilisiirto_kutsutaan(self):
-        self.kauppa.aloita_asiointi()
         self.kauppa.lisaa_koriin(1)
         self.kauppa.lisaa_koriin(1)
         self.kauppa.tilimaksu("pekka", "12345")
@@ -66,9 +64,32 @@ class TestKauppa(unittest.TestCase):
         self.pankki_mock.tilisiirto.assert_called_with("pekka", 42, "12345", ANY, 10)
 
     def test_maksettaessa_kaksi_ostosta_toinen_loppu_pankin_metodia_tilisiirto_kutsutaan(self):
-        self.kauppa.aloita_asiointi()
         self.kauppa.lisaa_koriin(1)
         self.kauppa.lisaa_koriin(3)
+        self.kauppa.tilimaksu("pekka", "12345")
+
+        # varmistetaan, että metodia tilisiirto on kutsuttu
+        self.pankki_mock.tilisiirto.assert_called_with("pekka", 42, "12345", ANY, 5)
+
+    def test_two_separate_purchases_get_different_viites(self):
+        self.kauppa.lisaa_koriin(1)
+        self.kauppa.tilimaksu("pekka", "12345")
+
+        self.kauppa.aloita_asiointi()
+        self.kauppa.lisaa_koriin(2)
+        self.kauppa.tilimaksu("mikko", "67890")
+
+        calls = self.pankki_mock.tilisiirto.call_args_list
+        first_call_args = calls[0][0]
+        second_call_args = calls[1][0]
+
+        self.assertEqual(first_call_args[1], 42)
+        self.assertEqual(second_call_args[1], 43)
+
+    def test_poista_esine_korista_pankin_metodia_tilisiirto_kutsutaan(self):
+        self.kauppa.lisaa_koriin(1)
+        self.kauppa.lisaa_koriin(2)
+        self.kauppa.poista_korista(2)
         self.kauppa.tilimaksu("pekka", "12345")
 
         # varmistetaan, että metodia tilisiirto on kutsuttu
