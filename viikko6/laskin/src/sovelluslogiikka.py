@@ -3,10 +3,10 @@ class Sovelluslogiikka:
         self._arvo = arvo
 
     def miinus(self, operandi):
-        self._arvo = self._arvo - operandi
+        self._arvo -= operandi
 
     def plus(self, operandi):
-        self._arvo = self._arvo + operandi
+        self._arvo += operandi
 
     def nollaa(self):
         self._arvo = 0
